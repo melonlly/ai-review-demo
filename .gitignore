@@ -1,5 +1,6 @@
-# 审查日志（运行时产物，不入库）
+# 审查日志（运行时产物，不入库）；保留样例报告作演示素材
 .harness/run-logs/*.json
+!.harness/run-logs/sample-review-result.json
 
 # 构建产物
 target/

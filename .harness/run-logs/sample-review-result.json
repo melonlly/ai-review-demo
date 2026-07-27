@@ -1,0 +1,95 @@
+{
+  "review_id": "sample-2026-07-27",
+  "reviewed_files": [
+    "backend/src/main/java/com/demo/controller/AuthController.java",
+    "backend/src/main/java/com/demo/controller/OrderController.java",
+    "backend/src/main/java/com/demo/service/OrderService.java",
+    "backend/src/main/resources/UserMapper.xml",
+    "backend/src/main/resources/application.yml"
+  ],
+  "summary": { "critical": 5, "high": 3, "medium": 1, "low": 0, "total": 9 },
+  "gate_decision": "BLOCK",
+  "findings": [
+    {
+      "file": "backend/src/main/resources/application.yml",
+      "line": 13,
+      "severity": "CRITICAL",
+      "category": "secret-hardcode",
+      "issue": "数据库密码硬编码到配置文件",
+      "fix": "改用环境变量或配置中心：password: ${DB_PASSWORD}",
+      "detected_by": "GitLeaks"
+    },
+    {
+      "file": "backend/src/main/resources/application.yml",
+      "line": 17,
+      "severity": "CRITICAL",
+      "category": "secret-hardcode",
+      "issue": "JWT 密钥硬编码，泄露后可伪造任意用户令牌",
+      "fix": "改用环境变量：secret: ${JWT_SECRET}，并轮换现有密钥",
+      "detected_by": "GitLeaks"
+    },
+    {
+      "file": "backend/src/main/resources/application.yml",
+      "line": 22,
+      "severity": "CRITICAL",
+      "category": "secret-hardcode",
+      "issue": "阿里云 AccessKey ID 硬编码",
+      "fix": "移入密钥管理服务（KMS）或环境变量，立即吊销泄露的 Key",
+      "detected_by": "GitLeaks"
+    },
+    {
+      "file": "backend/src/main/java/com/demo/controller/AuthController.java",
+      "line": 32,
+      "severity": "CRITICAL",
+      "category": "sensitive-field-exposure",
+      "issue": "Controller 直接返回 TokenInfo，accessToken/refreshToken 明文下发前端",
+      "fix": "新建 TokenVO 仅暴露 userId 与 expireAt，敏感字段不返回",
+      "detected_by": "AI"
+    },
+    {
+      "file": "backend/src/main/resources/UserMapper.xml",
+      "line": 9,
+      "severity": "CRITICAL",
+      "category": "sql-injection",
+      "issue": "使用 ${username} 字符串拼接，存在 SQL 注入风险",
+      "fix": "改为 #{username} 预编译参数",
+      "detected_by": "AI"
+    },
+    {
+      "file": "backend/src/main/java/com/demo/controller/AuthController.java",
+      "line": 29,
+      "severity": "HIGH",
+      "category": "log-desensitization",
+      "issue": "日志直接打印整个 token 对象，accessToken 泄露到日志文件",
+      "fix": "log.info(\"用户登录成功: userId={}\", token.getUserId())",
+      "detected_by": "AI"
+    },
+    {
+      "file": "backend/src/main/java/com/demo/service/OrderService.java",
+      "line": 29,
+      "severity": "HIGH",
+      "category": "transaction-failure",
+      "issue": "@Transactional 缺少 rollbackFor，且方法内 catch 吞掉异常，导致库存扣减失败时订单不回滚，数据不一致",
+      "fix": "@Transactional(rollbackFor = Exception.class)，移除内部 catch 或在 catch 中 throw",
+      "detected_by": "AI"
+    },
+    {
+      "file": "backend/src/main/resources/UserMapper.xml",
+      "line": 14,
+      "severity": "HIGH",
+      "category": "tenant-isolation",
+      "issue": "listAllUsers 查询未带 tenant_id 条件，存在跨租户数据越权",
+      "fix": "增加 WHERE tenant_id = #{tenantId} 条件",
+      "detected_by": "AI"
+    },
+    {
+      "file": "backend/src/main/java/com/demo/controller/OrderController.java",
+      "line": 21,
+      "severity": "MEDIUM",
+      "category": "param-validation",
+      "issue": "orderId 缺少 @NotBlank 校验，类上缺少 @Validated",
+      "fix": "类加 @Validated，参数加 @NotBlank(message = \"订单号不能为空\")",
+      "detected_by": "AI / Checkstyle"
+    }
+  ]
+}
