@@ -1,0 +1,19 @@
+#!/bin/sh
+# 本地静态门禁钩子（零仓库权限即可用）
+# 安装：cp scripts/review/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+echo "[1/2] 运行 GitLeaks 密钥扫描..."
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --config .gitleaks.toml --redact || {
+    echo "❌ 检测到疑似密钥，提交被拦截"
+    exit 1
+  }
+  echo "✅ GitLeaks 通过"
+else
+  echo "⚠️ 未安装 gitleaks，跳过。下载：https://github.com/gitleaks/gitleaks/releases"
+fi
+
+echo "[2/2] 运行 AI 审查..."
+sh scripts/review/local-review.sh || exit 1
+
+echo "✅ 静态门禁通过"

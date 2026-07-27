@@ -1,0 +1,39 @@
+title = "AI Review Demo - Security Scan"
+
+# GitHub Personal Access Token
+[[rules]]
+id = "github-token"
+description = "GitHub Personal Access Token"
+regex = '''ghp_[0-9a-zA-Z]{36}'''
+tags = ["secret", "github"]
+
+# 数据库密码硬编码
+[[rules]]
+id = "db-password"
+description = "数据库密码硬编码"
+regex = '''(?i)(password|passwd|pwd)\s*[:=]\s*["']?[^\s"']{6,}["']?'''
+tags = ["secret", "database"]
+
+# JWT 密钥硬编码
+[[rules]]
+id = "jwt-secret"
+description = "JWT 密钥硬编码"
+regex = '''(?i)(jwt[._-]?secret|secret)\s*[:=]\s*["'][^"']{16,}["']'''
+tags = ["secret", "jwt"]
+
+# 阿里云 / AWS AccessKey
+[[rules]]
+id = "cloud-access-key"
+description = "阿里云 / AWS Access Key"
+regex = '''(LTAI[A-Za-z0-9]{12,20}|AKIA[0-9A-Z]{16})'''
+tags = ["secret", "cloud"]
+
+[allowlist]
+description = "豁免路径"
+regexTarget = "match"
+paths = [
+    '''\.example$''',
+    '''.*Test\.java$''',
+    '''README\.md$''',
+    '''findByIdSafe'''
+]

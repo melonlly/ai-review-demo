@@ -1,0 +1,72 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [main, develop]
+
+jobs:
+  # ── 第一道防线：密钥扫描 ──
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: GitLeaks 密钥扫描
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+  # ── 第二道防线：静态分析 ──
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Checkstyle 检查
+        run: |
+          if [ -f pom.xml ]; then
+            mvn -q checkstyle:check || echo "::warning::Checkstyle 发现问题"
+          else
+            echo "无 pom.xml，跳过（演示库为片段代码）"
+          fi
+
+  # ── 第三道防线：AI 审查 ──
+  ai-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 获取变更文件
+        id: diff
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.(java|xml|yml)$' | tr '\n' ' ')
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+          echo "变更文件: $FILES"
+
+      - name: AI 安全审查（需配置 ANTHROPIC_API_KEY）
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "调用 AI 审查 ${{ steps.diff.outputs.files }}"
+          # 实际项目中在此调用 Claude CLI / API
+          # 见 scripts/review/local-review.sh
+
+      - name: 未配置 API Key 时提示
+        if: ${{ secrets.ANTHROPIC_API_KEY == '' }}
+        run: echo "::notice::未配置 ANTHROPIC_API_KEY，跳过 AI 审查。可在本地运行 scripts/review/local-review.sh"

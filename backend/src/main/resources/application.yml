@@ -1,0 +1,23 @@
+# 应用配置
+# ⚠️ 本文件故意埋入硬编码密钥隐患，用于演示 GitLeaks 拦截
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ai-review-demo
+  datasource:
+    url: jdbc:mysql://localhost:3306/demo
+    username: root
+    # 🔴 隐患⑦（CRITICAL）：数据库密码硬编码
+    password: MySecretPassword123
+
+jwt:
+  # 🔴 隐患⑧（CRITICAL）：JWT 密钥硬编码
+  secret: "this-is-a-very-long-jwt-secret-key-do-not-hardcode-me"
+  expire: 7200
+
+# 🔴 隐患⑨（CRITICAL）：云服务 AccessKey 硬编码
+aliyun:
+  access-key-id: LTAI5tGkExampleKeyId12
+  access-key-secret: abcdefGHIJKLMNopqrstUVWXYZ1234567
