@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<!-- ⚠️ 本文件故意埋入 SQL 注入与多租户隔离缺失隐患 -->
 <mapper namespace="com.demo.mapper.UserMapper">
 
-    <!-- 🔴 隐患⑤（CRITICAL）：使用 ${} 拼接，存在 SQL 注入风险 -->
     <select id="findByUsername" resultType="com.demo.domain.User">
         SELECT * FROM users WHERE username = '${username}'
     </select>
 
-    <!-- 🔴 隐患⑥（HIGH）：查询未带 tenant_id，多租户数据未隔离 -->
     <select id="listAllUsers" resultType="com.demo.domain.User">
         SELECT * FROM users ORDER BY create_time DESC
     </select>
 
-    <!-- ✅ 正确写法参照：使用 #{} 预编译 + 租户隔离 -->
+    <!-- 新增：按用户名关键字模糊查询 -->
+    <select id="findByName" resultType="com.demo.domain.User">
+        SELECT * FROM users WHERE name LIKE '%${keyword}%'
+    </select>
+
     <select id="findByIdSafe" resultType="com.demo.domain.User">
         SELECT * FROM users WHERE id = #{id} AND tenant_id = #{tenantId}
     </select>
