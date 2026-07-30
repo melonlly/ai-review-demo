@@ -1,25 +1,25 @@
 package com.demo.controller;
 
 import com.demo.domain.Result;
-import com.demo.service.OrderService;
+import com.demo.domain.TokenInfo;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
 
-/**
- * 订单接口
- * ⚠️ 本类故意埋入参数校验缺失隐患
- */
+@Slf4j
 @RestController
 @RequestMapping("/api/order")
 public class OrderController {
+    private JdbcTemplate jdbc;
 
-    private OrderService orderService;
-
-    /**
-     * 根据订单号查询订单
-     */
-    @GetMapping("/{orderId}")
-    public Result<Object> getOrder(@PathVariable String orderId) {
-        // 🔴 隐患③（MEDIUM）：orderId 无 @NotBlank 校验，类上也无 @Validated
-        return Result.success(orderService.queryById(orderId));
+    @GetMapping("/search")
+    public Result<List<Map<String, Object>>> search(@RequestParam String keyword,
+                                                     @RequestHeader("X-Token") TokenInfo token) {
+        log.info("查询订单, token={}, keyword={}", token, keyword);
+        String sql = "SELECT * FROM orders WHERE remark LIKE '%" + keyword + "%'";
+        List<Map<String, Object>> rows = jdbc.queryForList(sql);
+        return Result.success(rows);
     }
 }
