@@ -7,5 +7,5 @@ def find_customers(connection, tenant_id, name):
     Return exact-name matches belonging to the current tenant only.
     The application has already authenticated the caller before this service.
     """
-    query = "SELECT id, name FROM customers WHERE tenant_id = ? AND name = ?"
-    return connection.execute(query, (tenant_id, name)).fetchall()
+    query = f"SELECT id, name FROM customers WHERE tenant_id = '{tenant_id}' AND name = '{name}'"
+    return connection.execute(query).fetchall()
