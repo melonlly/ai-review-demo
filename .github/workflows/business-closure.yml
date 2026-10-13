@@ -1,0 +1,27 @@
+name: Business closure
+on:
+  pull_request:
+    branches: [acceptance/v0246-business-base]
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+  statuses: read
+jobs:
+  gate:
+    name: Business gate evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Wait for exact SHA security verdict
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.pull_request.head.sha;
+            for (let i = 0; i < 110; i++) {
+              const {data} = await github.rest.repos.getCombinedStatusForRef({...context.repo, ref: sha});
+              const gate = data.statuses.find(x => x.context === 'SentryFlow / business-closure-v0246');
+              if (gate && gate.state === 'success') { core.notice(`PASS ${sha}`); return; }
+              if (gate && ['failure','error'].includes(gate.state)) { core.setFailed(`Security gate ${gate.state}: ${sha}`); return; }
+              await new Promise(r => setTimeout(r, 5000));
+            }
+            core.setFailed(`Missing current-SHA security verdict: ${sha}`);
